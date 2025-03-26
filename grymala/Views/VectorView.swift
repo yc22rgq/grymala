@@ -8,19 +8,86 @@
 import SwiftUI
 
 struct VectorView: View {
-    let vector: VectorModel
+    @Binding var vector: VectorModel
     let offset: CGSize
-    let isHighlighted: Bool
+    @State private var isDragging = false
+    @State private var dragStart: CGPoint = .zero
+    @State private var dragEnd: CGPoint = .zero
+    @State private var isDraggingWholeVector = false
     
     var body: some View {
-        Path { path in
-            path.move(to: CGPoint(x: vector.start.x + offset.width, y: vector.start.y + offset.height))
-            path.addLine(to: CGPoint(x: vector.end.x + offset.width, y: vector.end.y + offset.height))
-        }
-        .stroke(vector.color, lineWidth: isHighlighted ? 5 : 2)
-        .overlay(
+        ZStack {
+            // Линия вектора
+            Path { path in
+                path.move(to: vector.start.translated(by: offset))
+                path.addLine(to: vector.end.translated(by: offset))
+            }
+            .stroke(vector.color, lineWidth: 2)
+
+            // Стрелка
             ArrowHead(at: vector.end, color: vector.color, offset: offset)
-        )
+            
+            // Точки (Начало и Конец)
+            Circle()
+                .frame(width: 15, height: 15)
+                .foregroundColor(.blue)
+                .position(vector.start.translated(by: offset))
+                .gesture(dragPointGesture(isStart: true))
+            
+            Circle()
+                .frame(width: 15, height: 15)
+                .foregroundColor(.red)
+                .position(vector.end.translated(by: offset))
+                .gesture(dragPointGesture(isStart: false))
+            
+            // Перетаскивание всего вектора
+            Rectangle()
+                .frame(width: vector.length, height: 20)
+                .position(vector.center.translated(by: offset))
+                .opacity(0.001) // Невидимый слой для DragGesture
+                .gesture(dragWholeVectorGesture())
+        }
+    }
+    
+    /// Жест для перетаскивания начальной или конечной точки
+    private func dragPointGesture(isStart: Bool) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                isDragging = true
+                if isStart {
+                    vector.start.x = value.location.x - offset.width
+                    vector.start.y = value.location.y - offset.height
+                } else {
+                    vector.end.x = value.location.x - offset.width
+                    vector.end.y = value.location.y - offset.height
+                }
+            }
+            .onEnded { _ in
+                isDragging = false
+            }
+    }
+    
+    /// Жест для перетаскивания всего вектора
+    private func dragWholeVectorGesture() -> some Gesture {
+        LongPressGesture(minimumDuration: 0.3)
+            .onEnded { _ in
+                isDraggingWholeVector = true
+            }
+            .simultaneously(with: DragGesture()
+                .onChanged { value in
+                    if isDraggingWholeVector {
+                        let dx = value.translation.width
+                        let dy = value.translation.height
+                        vector.start.x += dx
+                        vector.start.y += dy
+                        vector.end.x += dx
+                        vector.end.y += dy
+                    }
+                }
+                .onEnded { _ in
+                    isDraggingWholeVector = false
+                }
+            )
     }
 }
 
