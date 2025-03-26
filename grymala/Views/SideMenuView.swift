@@ -29,7 +29,7 @@ struct SideMenuView: View {
                             ForEach(vectors) { vector in
                                 HStack {
                                     VStack(alignment: .leading) {
-                                        Text("(\(Double(vector.start.x / 40 - 0.5), specifier: "%.2f"), \(Double(vector.start.y / 40), specifier: "%.2f")) → (\(Double(vector.end.x / 40 - 0.5), specifier: "%.2f"), \(Double(vector.end.y / 40), specifier: "%.2f"))")
+                                        Text("(\(Double(vector.start.x / 40 + 0.5), specifier: "%.2f"), \(Double(vector.start.y / 40), specifier: "%.2f")) → (\(Double(vector.end.x / 40 + 0.5), specifier: "%.2f"), \(Double(vector.end.y / 40), specifier: "%.2f"))")
                                         Text("Длина: \(vector.length, specifier: "%.2f")")
                                             .font(.caption)
                                             .foregroundColor(.gray)
