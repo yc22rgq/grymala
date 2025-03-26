@@ -11,7 +11,9 @@ struct VectorCanvasView: View {
     @State private var vectors: [VectorModel] = []
     @State private var offset: CGSize = .zero
     @State private var showVectorInput = false
-    private let gridSize: CGFloat = 40  // Размер клетки
+    @State private var showSideMenu = false
+    @State private var highlightedVectorID: UUID?
+    private let gridSize: CGFloat = 40
 
     var body: some View {
         ZStack {
@@ -20,7 +22,7 @@ struct VectorCanvasView: View {
             
             // Векторы на экране
             ForEach(vectors) { vector in
-                VectorView(vector: vector, offset: offset)
+                VectorView(vector: vector, offset: offset, isHighlighted: highlightedVectorID == vector.id)
             }
 
             // Перетаскивание полотна
@@ -30,6 +32,13 @@ struct VectorCanvasView: View {
                         offset = CGSize(width: value.translation.width, height: value.translation.height)
                     }
             )
+            
+            // Side-меню (выезжает слева)
+            if showSideMenu {
+                SideMenuView(vectors: $vectors) { selectedID in
+                    highlightVector(selectedID)
+                }
+            }
         }
         .overlay(
             Button(action: {
@@ -45,10 +54,32 @@ struct VectorCanvasView: View {
             .padding(),
             alignment: .bottomTrailing
         )
+        .overlay(
+            Button(action: {
+                withAnimation { showSideMenu.toggle() }
+            }) {
+                Image(systemName: "list.bullet")
+                    .padding()
+                    .background(Color.gray.opacity(0.8))
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(radius: 5)
+            }
+            .padding(),
+            alignment: .topLeading
+        )
         .sheet(isPresented: $showVectorInput) {
             VectorInputView { newVector in
                 vectors.append(newVector)
             }
+        }
+    }
+    
+    /// Подсвечивает вектор на 1 секунду
+    private func highlightVector(_ id: UUID) {
+        highlightedVectorID = id
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            highlightedVectorID = nil
         }
     }
 }

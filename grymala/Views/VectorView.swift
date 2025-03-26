@@ -10,13 +10,14 @@ import SwiftUI
 struct VectorView: View {
     let vector: VectorModel
     let offset: CGSize
+    let isHighlighted: Bool
     
     var body: some View {
         Path { path in
             path.move(to: CGPoint(x: vector.start.x + offset.width, y: vector.start.y + offset.height))
             path.addLine(to: CGPoint(x: vector.end.x + offset.width, y: vector.end.y + offset.height))
         }
-        .stroke(vector.color, lineWidth: 3)
+        .stroke(vector.color, lineWidth: isHighlighted ? 5 : 2)
         .overlay(
             ArrowHead(at: vector.end, color: vector.color, offset: offset)
         )

@@ -25,3 +25,9 @@ extension Color {
         )
     }
 }
+
+extension VectorModel {
+    var length: CGFloat {
+        sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
+    }
+}
