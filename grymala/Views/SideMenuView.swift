@@ -8,14 +8,24 @@
 import SwiftUI
 
 struct SideMenuView: View {
-    @Binding var vectors: [VectorModel]
-    var onSelectVector: (UUID) -> Void
-    
+    @Binding var isOpen: Bool
+    var vectors: [VectorModel]
+    var onDelete: (VectorModel) -> Void
+    var onSelect: (UUID) -> Void
+
     private let menuWidth = UIScreen.main.bounds.width / 3
 
     var body: some View {
-        GeometryReader { geometry in
+        GeometryReader { _ in
             ZStack {
+                if isOpen {
+                    Color.black.opacity(0.4)
+                        .edgesIgnoringSafeArea(.all)
+                        .onTapGesture {
+                            withAnimation { isOpen.toggle() }
+                        }
+                }
+                
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Векторы")
@@ -32,17 +42,13 @@ struct SideMenuView: View {
                                             .foregroundColor(.gray)
                                     }
                                     Spacer()
-                                    Button(action: {
-                                        withAnimation {
-                                            vectors.removeAll { $0.id == vector.id }
-                                        }
-                                    }) {
+                                    Button(action: { onDelete(vector) }) {
                                         Image(systemName: "trash")
                                             .foregroundColor(.red)
                                     }
                                 }
                                 .onTapGesture {
-                                    onSelectVector(vector.id)
+                                    onSelect(vector.id)
                                 }
                             }
                         }

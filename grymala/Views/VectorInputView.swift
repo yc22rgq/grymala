@@ -19,22 +19,17 @@ struct VectorInputView: View {
         NavigationView {
             Form {
                 Section(header: Text("Начальная точка")) {
-                    TextField("X", text: $startX)
-                        .keyboardType(.decimalPad)
-                    TextField("Y", text: $startY)
-                        .keyboardType(.decimalPad)
+                    TextField("X", text: $startX).keyboardType(.decimalPad)
+                    TextField("Y", text: $startY).keyboardType(.decimalPad)
                 }
                 Section(header: Text("Конечная точка")) {
-                    TextField("X", text: $endX)
-                        .keyboardType(.decimalPad)
-                    TextField("Y", text: $endY)
-                        .keyboardType(.decimalPad)
+                    TextField("X", text: $endX).keyboardType(.decimalPad)
+                    TextField("Y", text: $endY).keyboardType(.decimalPad)
                 }
                 
                 Button("Добавить вектор") {
                     if let sx = Double(startX), let sy = Double(startY),
                        let ex = Double(endX), let ey = Double(endY) {
-                        
                         let newVector = VectorModel(
                             start: CGPoint(x: sx, y: sy),
                             end: CGPoint(x: ex, y: ey),

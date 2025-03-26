@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct VectorCanvasView: View {
-    @State private var vectors: [VectorModel] = []
+    @Environment(\.modelContext) private var modelContext
+    @Query private var storedVectors: [VectorModel]  // @Query загружает данные
+    @State private var vectors: [VectorModel] = []  // Локальное хранилище
+    
     @State private var offset: CGSize = .zero
     @State private var showVectorInput = false
     @State private var showSideMenu = false
@@ -17,15 +21,11 @@ struct VectorCanvasView: View {
 
     var body: some View {
         ZStack {
-            // Клетчатый фон
             GridBackground(gridSize: gridSize, offset: offset)
             
-            // Векторы на экране
-            ForEach(vectors) { vector in
-                VectorView(vector: vector, offset: offset, isHighlighted: highlightedVectorID == vector.id)
+            ForEach(vectors.indices, id: \.self) { index in
+                VectorView(vector: binding(for: vectors[index].id), offset: offset, isHighlighted: highlightedVectorID == vectors[index].id)
             }
-
-            // Перетаскивание полотна
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -33,17 +33,13 @@ struct VectorCanvasView: View {
                     }
             )
             
-            // Side-меню (выезжает слева)
-            if showSideMenu {
-                SideMenuView(vectors: $vectors) { selectedID in
-                    highlightVector(selectedID)
-                }
-            }
+            SideMenuView(isOpen: $showSideMenu, vectors: vectors, onDelete: deleteVector, onSelect: highlightVector)
+        }
+        .onAppear {
+            vectors = storedVectors  // Загружаем векторы при старте
         }
         .overlay(
-            Button(action: {
-                showVectorInput = true
-            }) {
+            Button(action: { showVectorInput = true }) {
                 Image(systemName: "plus")
                     .padding()
                     .background(Color.blue)
@@ -54,28 +50,30 @@ struct VectorCanvasView: View {
             .padding(),
             alignment: .bottomTrailing
         )
-        .overlay(
-            Button(action: {
-                withAnimation { showSideMenu.toggle() }
-            }) {
-                Image(systemName: "list.bullet")
-                    .padding()
-                    .background(Color.gray.opacity(0.8))
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 5)
-            }
-            .padding(),
-            alignment: .topLeading
-        )
         .sheet(isPresented: $showVectorInput) {
             VectorInputView { newVector in
-                vectors.append(newVector)
+                modelContext.insert(newVector)  // Сохраняем в SwiftData
+                vectors.append(newVector)  // Обновляем локальный список
             }
         }
     }
     
-    /// Подсвечивает вектор на 1 секунду
+    /// Возвращает `Binding<VectorModel>` для редактирования
+    private func binding(for id: UUID) -> Binding<VectorModel> {
+        guard let index = vectors.firstIndex(where: { $0.id == id }) else {
+            fatalError("Vector not found")  // Ошибка если вектор не найден (не должно происходить)
+        }
+        return Binding(
+            get: { self.vectors[index] },
+            set: { self.vectors[index] = $0 }
+        )
+    }
+
+    private func deleteVector(_ vector: VectorModel) {
+        modelContext.delete(vector)
+        vectors.removeAll { $0.id == vector.id }
+    }
+
     private func highlightVector(_ id: UUID) {
         highlightedVectorID = id
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
