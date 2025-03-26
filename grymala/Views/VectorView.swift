@@ -14,6 +14,10 @@ struct VectorView: View {
     @State private var dragStart: CGPoint = .zero
     @State private var dragEnd: CGPoint = .zero
     @State private var isDraggingWholeVector = false
+    var isHighlighted: Bool = false
+    private let threshold: CGFloat = 20  // Порог прилипания (можно настроить)
+    private let angleThreshold: CGFloat = 5  // Погрешность для 90°
+    let allVectors: [VectorModel]
     
     var body: some View {
         ZStack {
@@ -22,7 +26,7 @@ struct VectorView: View {
                 path.move(to: vector.start.translated(by: offset))
                 path.addLine(to: vector.end.translated(by: offset))
             }
-            .stroke(vector.color, lineWidth: 2)
+            .stroke(vector.color, lineWidth: isHighlighted ? 5 : 2)
 
             // Стрелка
             ArrowHead(at: vector.end, color: vector.color, offset: offset)
@@ -49,18 +53,22 @@ struct VectorView: View {
         }
     }
     
-    /// Жест для перетаскивания начальной или конечной точки
+    /// Жест для перетаскивания начальной или конечной точки с "прилипанием"
     private func dragPointGesture(isStart: Bool) -> some Gesture {
         DragGesture()
             .onChanged { value in
                 isDragging = true
+                let newPoint = CGPoint(x: value.location.x - offset.width, y: value.location.y - offset.height)
+                
                 if isStart {
-                    vector.start.x = value.location.x - offset.width
-                    vector.start.y = value.location.y - offset.height
+                    vector.start = applySnapping(to: newPoint, relativeTo: vector.end)
                 } else {
-                    vector.end.x = value.location.x - offset.width
-                    vector.end.y = value.location.y - offset.height
+                    vector.end = applySnapping(to: newPoint, relativeTo: vector.start)
                 }
+                
+                // Проверяем "прилипание" к другим векторам
+                vector.start = snapToOtherVectors(vector.start)
+                vector.end = snapToOtherVectors(vector.end)
             }
             .onEnded { _ in
                 isDragging = false
@@ -76,8 +84,8 @@ struct VectorView: View {
             .simultaneously(with: DragGesture()
                 .onChanged { value in
                     if isDraggingWholeVector {
-                        let dx = value.translation.width
-                        let dy = value.translation.height
+                        let dx = value.translation.width / 40
+                        let dy = value.translation.height / 40
                         vector.start.x += dx
                         vector.start.y += dy
                         vector.end.x += dx
@@ -88,6 +96,38 @@ struct VectorView: View {
                     isDraggingWholeVector = false
                 }
             )
+    }
+    
+    /// Проверяет и "прилипает" к вертикали или горизонтали
+    private func applySnapping(to point: CGPoint, relativeTo referencePoint: CGPoint) -> CGPoint {
+        let dx = abs(point.x - referencePoint.x)
+        let dy = abs(point.y - referencePoint.y)
+
+        if dx < threshold {
+            return CGPoint(x: referencePoint.x, y: point.y) // Прилипает к вертикали
+        } else if dy < threshold {
+            return CGPoint(x: point.x, y: referencePoint.y) // Прилипает к горизонтали
+        } else {
+            return point // Оставляем как есть
+        }
+    }
+    
+    /// Проверяет "прилипание" к началу/концу других векторов
+    private func snapToOtherVectors(_ point: CGPoint) -> CGPoint {
+        for otherVector in allVectors where otherVector.id != vector.id {
+            if distance(point, otherVector.start) < threshold {
+                return otherVector.start
+            }
+            if distance(point, otherVector.end) < threshold {
+                return otherVector.end
+            }
+        }
+        return point
+    }
+    
+    /// Вычисляет расстояние между двумя точками
+    private func distance(_ p1: CGPoint, _ p2: CGPoint) -> CGFloat {
+        return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2))
     }
 }
 

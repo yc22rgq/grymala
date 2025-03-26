@@ -5,10 +5,11 @@
 //  Created by Эдуард Кудянов on 26.03.25.
 //
 
+import Foundation
 import SwiftUI
+import SwiftData
 
 struct SideMenuView: View {
-    @Binding var isOpen: Bool
     var vectors: [VectorModel]
     var onDelete: (VectorModel) -> Void
     var onSelect: (UUID) -> Void
@@ -18,14 +19,6 @@ struct SideMenuView: View {
     var body: some View {
         GeometryReader { _ in
             ZStack {
-                if isOpen {
-                    Color.black.opacity(0.4)
-                        .edgesIgnoringSafeArea(.all)
-                        .onTapGesture {
-                            withAnimation { isOpen.toggle() }
-                        }
-                }
-                
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Векторы")
@@ -36,7 +29,7 @@ struct SideMenuView: View {
                             ForEach(vectors) { vector in
                                 HStack {
                                     VStack(alignment: .leading) {
-                                        Text("(\(Int(vector.start.x)), \(Int(vector.start.y))) → (\(Int(vector.end.x)), \(Int(vector.end.y)))")
+                                        Text("(\(Double(vector.start.x / 40 - 0.5), specifier: "%.2f"), \(Double(vector.start.y / 40), specifier: "%.2f")) → (\(Double(vector.end.x / 40 - 0.5), specifier: "%.2f"), \(Double(vector.end.y / 40), specifier: "%.2f"))")
                                         Text("Длина: \(vector.length, specifier: "%.2f")")
                                             .font(.caption)
                                             .foregroundColor(.gray)

@@ -31,8 +31,8 @@ struct VectorInputView: View {
                     if let sx = Double(startX), let sy = Double(startY),
                        let ex = Double(endX), let ey = Double(endY) {
                         let newVector = VectorModel(
-                            start: CGPoint(x: sx, y: sy),
-                            end: CGPoint(x: ex, y: ey),
+                            start: CGPoint(x: (sx - 0.5) * 40, y: (sy) * 40),
+                            end: CGPoint(x: (ex - 0.5) * 40, y: (ey) * 40),
                             color: Color.random
                         )
                         onAdd(newVector)
@@ -44,3 +44,4 @@ struct VectorInputView: View {
         }
     }
 }
+

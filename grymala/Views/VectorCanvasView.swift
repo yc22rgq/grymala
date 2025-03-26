@@ -5,6 +5,7 @@
 //  Created by Эдуард Кудянов on 26.03.25.
 //
 
+import Foundation
 import SwiftUI
 import SwiftData
 
@@ -24,7 +25,8 @@ struct VectorCanvasView: View {
             GridBackground(gridSize: gridSize, offset: offset)
             
             ForEach(vectors.indices, id: \.self) { index in
-                VectorView(vector: binding(for: vectors[index].id), offset: offset, isHighlighted: highlightedVectorID == vectors[index].id)
+                VectorView(vector: binding(for: vectors[index].id), offset: offset, isHighlighted: highlightedVectorID == vectors[index].id,
+                           allVectors: vectors)
             }
             .gesture(
                 DragGesture()
@@ -33,7 +35,9 @@ struct VectorCanvasView: View {
                     }
             )
             
-            SideMenuView(isOpen: $showSideMenu, vectors: vectors, onDelete: deleteVector, onSelect: highlightVector)
+            if showSideMenu {
+                SideMenuView(vectors: vectors, onDelete: deleteVector, onSelect: highlightVector)
+            }
         }
         .onAppear {
             vectors = storedVectors  // Загружаем векторы при старте
@@ -49,6 +53,20 @@ struct VectorCanvasView: View {
             }
             .padding(),
             alignment: .bottomTrailing
+        )
+        .overlay(
+            Button(action: {
+                withAnimation { showSideMenu.toggle() }
+            }) {
+                Image(systemName: "list.bullet")
+                    .padding()
+                    .background(Color.gray.opacity(0.8))
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(radius: 5)
+            }
+                .padding(),
+            alignment: .topLeading
         )
         .sheet(isPresented: $showVectorInput) {
             VectorInputView { newVector in

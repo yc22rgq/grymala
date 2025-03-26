@@ -5,6 +5,7 @@
 //  Created by Эдуард Кудянов on 26.03.25.
 //
 
+import Foundation
 import SwiftUI
 import SwiftData
 
@@ -72,7 +73,15 @@ extension Color {
     }
 }
 
+extension CGPoint {
+    /// Смещает точку на указанный вектор
+    func translated(by offset: CGSize) -> CGPoint {
+        return CGPoint(x: self.x + offset.width, y: self.y + offset.height)
+    }
+}
+
 extension VectorModel {
+    /// Длина вектора
     var length: CGFloat {
         sqrt(pow(end.x - start.x, 2) + pow(end.y - start.y, 2))
     }
@@ -80,12 +89,5 @@ extension VectorModel {
     /// Центр вектора
     var center: CGPoint {
         CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
-    }
-}
-
-extension CGPoint {
-    /// Смещает точку на указанный вектор
-    func translated(by offset: CGSize) -> CGPoint {
-        return CGPoint(x: self.x + offset.width, y: self.y + offset.height)
     }
 }
